@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
+import Notification from './components/Notification'
 import PhonebookService from './PhonebookService'
 
 const App = () => {
@@ -9,6 +10,18 @@ const App = () => {
   const [ newName, setNewName ] = useState('')
   const [ newNumber, setNewNumber ] = useState('')  
   const [ newFilter, setNewFilter ] = useState('')
+  const [ notification, setNotification ] = useState({
+    message: undefined, state: undefined
+  })
+
+  const notificationHelper = (notification) => {
+    setNotification(notification)
+    setTimeout(() => {
+      setNotification({
+        message: undefined, state: undefined
+      })
+    }, 5000)
+  }
 
   const addContact = async (event) => {
     event.preventDefault()
@@ -16,7 +29,10 @@ const App = () => {
     let isExist = personsCopy.find(p => p.name.toLowerCase() === newName.toLowerCase())
     if (isExist) {
       if (isExist.number === newNumber) {
-        alert(`${newName} is already added to phonebook`)
+        notificationHelper({
+          message: `${newName} is already added to phonebook.`,
+          state: 'error'
+        })
       } else {
         if (window.confirm(`${newName} is already in the phonebook, replace number?`)) {
           try {
@@ -25,8 +41,15 @@ const App = () => {
               number: newNumber
             })
             fetchData()
+            notificationHelper({
+              message: `${newName} is updated in the phonebook.`,
+              state: 'success'
+            })
           } catch (err) {
-            alert(`Failed to update ${newName}`)
+            notificationHelper({
+              message: `Failed to update ${newName}`,
+              state: 'error'
+            })
           }
         }
       }
@@ -38,8 +61,15 @@ const App = () => {
         })
         personsCopy.push(response.data)
         setPersons(personsCopy)
+        notificationHelper({
+          message: `${newName} is added in the phonebook.`,
+          state: 'success'
+        })
       } catch (err) {
-        alert(`Failed to add the contact "${newName}".`)
+        notificationHelper({
+          message: `Failed to add ${newName}.`,
+          state: 'error'
+        })
       }
     }
   }
@@ -70,8 +100,15 @@ const App = () => {
       try {
         await PhonebookService.deleteById(person.id)
         fetchData()
+        notificationHelper({
+          message: `${person.name} is deleted in the phonebook.`,
+          state: 'success'
+        })
       } catch (err) {
-        alert(`Failed to delete ${person.name}.`)
+        notificationHelper({
+          message: `Failed to delete ${person.name}. Refresh to get the latest phonebook list.`,
+          state: 'error'
+        })
       }
     }
   }
@@ -82,6 +119,7 @@ const App = () => {
 
   return (
     <div>
+      <Notification message={notification.message} state={notification.state} />
       <h2>Phonebook</h2>
       <Filter value={newFilter} onChange={handleFilterChange} />
       <h3>Add a new</h3>

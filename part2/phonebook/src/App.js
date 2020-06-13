@@ -2,36 +2,54 @@ import React, { useState, useEffect } from 'react'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
-import axios from 'axios'
+import PhonebookService from './PhonebookService'
 
 const App = () => {
-  const [ persons, setPersons ] = useState([
-    { name: 'Arto Hellas', number: '123456' }
-  ]) 
+  const [ persons, setPersons ] = useState([]) 
   const [ newName, setNewName ] = useState('')
-  const [ newNumber, setNewNumber ] = useState('')
+  const [ newNumber, setNewNumber ] = useState('')  
   const [ newFilter, setNewFilter ] = useState('')
 
-  const addContact = (event) => {
+  const addContact = async (event) => {
     event.preventDefault()
     let personsCopy = [...persons]
-    let isExist = personsCopy.find(p => p.name === newName)
+    let isExist = personsCopy.find(p => p.name.toLowerCase() === newName.toLowerCase())
     if (isExist) {
-      alert(`${newName} is already added to phonebook`)
+      if (isExist.number === newNumber) {
+        alert(`${newName} is already added to phonebook`)
+      } else {
+        if (window.confirm(`${newName} is already in the phonebook, replace number?`)) {
+          try {
+            await PhonebookService.update(isExist.id, {
+              name: newName,
+              number: newNumber
+            })
+            fetchData()
+          } catch (err) {
+            alert(`Failed to update ${newName}`)
+          }
+        }
+      }
     } else {
-      personsCopy.push({
-        name: newName,
-        number: newNumber
-      })
-      setPersons(personsCopy)
+      try {
+        let response = await PhonebookService.create({
+          name: newName,
+          number: newNumber
+        })
+        personsCopy.push(response.data)
+        setPersons(personsCopy)
+      } catch (err) {
+        alert(`Failed to add the contact "${newName}".`)
+      }
     }
   }
 
+  const fetchData = async () => {
+    const persons = await PhonebookService.getAll()
+    setPersons(persons.data)
+  }
+
   useEffect(() => {
-    async function fetchData() {
-      const persons = await axios.get('http://localhost:3001/persons')
-      setPersons(persons.data)
-    }
     fetchData()
   }, [])
 
@@ -45,6 +63,17 @@ const App = () => {
 
   const handleFilterChange = (event) => {
     setNewFilter(event.target.value)
+  }
+
+  const handleDeletion = async (person) => {
+    if (window.confirm(`Delete ${person.name}?`)) {
+      try {
+        await PhonebookService.deleteById(person.id)
+        fetchData()
+      } catch (err) {
+        alert(`Failed to delete ${person.name}.`)
+      }
+    }
   }
 
   const displayPersons = newFilter.trim() === '' ?
@@ -64,7 +93,7 @@ const App = () => {
         onNumberChange={handleNumberChange}
       />
       <h2>Numbers</h2>
-      <Persons persons={displayPersons} />
+      <Persons persons={displayPersons} onDeleteButtonClick={handleDeletion}/>
     </div>
   )
 }

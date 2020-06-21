@@ -77,6 +77,29 @@ test('add a new blog without url', async () => {
   expect(response.status).toBe(400)
 })
 
+test('update a blog', async () => {
+  const id = '5a422a851b54a676234d17f7'
+  const newBlog = {
+    title: 'title1',
+    author: 'author1',
+    url: 'url1'
+  }
+  let response = await api.put(`/api/blogs/${id}`).send(newBlog)
+  expect(response.status).toBe(200)
+  expect(response.body).toBeDefined()
+  expect(response.body.id).toBe(id)
+  expect(response.body.title).toBe(newBlog.title)
+  expect(response.body.url).toBe(newBlog.url)
+})
+
+test('delete a blog', async () => {
+  const id = '5a422a851b54a676234d17f7'
+  let response = await api.delete(`/api/blogs/${id}`)
+  expect(response.status).toBe(204)
+  response = await api.get('/api/blogs')
+  expect(response.body).toHaveLength(1)
+})
+
 test('this is a test', () => {
   expect(true)
 })

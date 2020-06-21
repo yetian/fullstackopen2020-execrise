@@ -28,6 +28,55 @@ test('blogs are returned as json', async () => {
   expect(response.body).toHaveLength(2)
 })
 
+test('blog _id is defined as id', async () => {
+  const response = await api.get('/api/blogs')
+  const first = response.body[0]
+  expect(first.id).toBeDefined()
+  expect(first._id).toBe(undefined)
+})
+
+test('add a new blog', async () => {
+  const newBlog = {
+    title: 'title',
+    author: 'author',
+    url: 'url',
+    likes: 10
+  }
+  let response = await api.post('/api/blogs').send(newBlog)
+  expect(response.status).toBe(201)
+  response = await api.get('/api/blogs')
+  expect(response.body).toHaveLength(3)
+})
+
+test('add a new blog without like', async () => {
+  const newBlog = {
+    title: 'title',
+    author: 'author',
+    url: 'url'
+  }
+  let response = await api.post('/api/blogs').send(newBlog)
+  expect(response.status).toBe(201)
+  expect(response.body.likes).toBe(0)
+})
+
+test('add a new blog without title', async () => {
+  const newBlog = {
+    author: 'author',
+    url: 'url'
+  }
+  let response = await api.post('/api/blogs').send(newBlog)
+  expect(response.status).toBe(400)
+})
+
+test('add a new blog without url', async () => {
+  const newBlog = {
+    title: 'title',
+    author: 'author'
+  }
+  let response = await api.post('/api/blogs').send(newBlog)
+  expect(response.status).toBe(400)
+})
+
 test('this is a test', () => {
   expect(true)
 })

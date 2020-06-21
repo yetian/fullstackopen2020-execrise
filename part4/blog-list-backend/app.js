@@ -7,18 +7,32 @@ const BlogDBService = require('./model/BlogDBService')
 app.use(cors())
 app.use(express.json())
 
-app.get('/api/blogs', (request, response, next) => {
-  BlogDBService.find({}).then(blogs => {
+app.get('/api/blogs', async (request, response, next) => {
+  try {
+    let blogs = await BlogDBService.find({})
     response.json(blogs)
-  }).catch(err => next(err))
+  } catch (err) {
+    next(err)
+  }
 })
 
-app.post('/api/blogs', (request, response, next) => {
-  const blog = new BlogDBService(request.body)
+app.post('/api/blogs', async (request, response, next) => {
+  try {
+    let newBlog = request.body
+    if (newBlog.likes === undefined) {
+      newBlog.likes = 0
+    }
 
-  blog.save().then(result => {
+    if (newBlog.title === undefined || newBlog.url === undefined) {
+      response.status(400).end()
+    }
+
+    const blog = new BlogDBService(request.body)
+    const result = await blog.save()
     response.status(201).json(result)
-  }).catch(err => next(err))
+  } catch (err) {
+    next(err)
+  }
 })
 
 module.exports = app

@@ -1,6 +1,11 @@
 const mongoose = require('mongoose')
 
-const db_url = process.env.MONGODB_URL
+let db_url = process.env.MONGODB_URL
+
+if (process.env.NODE_ENV === 'test') {
+  db_url = process.env.MONGODB_URL_TEST
+}
+
 console.log('using', db_url)
 
 mongoose.connect(db_url, { useNewUrlParser: true, useUnifiedTopology: true }).then(() => {

@@ -3,7 +3,7 @@ require('dotenv').config()
 const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
-const BlogDBService = require('../model/BlogDBService')
+const Blog = require('../model/BlogDBService')
 const api = supertest(app)
 
 const blogs = [
@@ -16,10 +16,10 @@ const blogs = [
 ]
 
 beforeEach(async () => {
-  await BlogDBService.deleteMany({})
-  let blogObject = new BlogDBService(blogs[0])
+  await Blog.deleteMany({})
+  let blogObject = new Blog(blogs[0])
   await blogObject.save()
-  blogObject = new BlogDBService(blogs[1])
+  blogObject = new Blog(blogs[1])
   await blogObject.save()
 })
 

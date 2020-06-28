@@ -2,14 +2,14 @@ const express = require('express')
 const app = express()
 const cors = require('cors')
 
-const BlogDBService = require('./model/BlogDBService')
+const Blog = require('./model/BlogDBService')
 
 app.use(cors())
 app.use(express.json())
 
 app.get('/api/blogs', async (request, response, next) => {
   try {
-    let blogs = await BlogDBService.find({})
+    let blogs = await Blog.find({})
     response.json(blogs)
   } catch (err) {
     next(err)
@@ -27,7 +27,7 @@ app.post('/api/blogs', async (request, response, next) => {
       response.status(400).end()
     }
 
-    const blog = new BlogDBService(request.body)
+    const blog = new Blog(request.body)
     const result = await blog.save()
     response.status(201).json(result)
   } catch (err) {
@@ -52,7 +52,7 @@ app.put('/api/blogs/:id', async (request, response, next) => {
       response.status(400).end()
     }
 
-    let updatedBlog = await BlogDBService.findByIdAndUpdate(id, blog, { new: true })
+    let updatedBlog = await Blog.findByIdAndUpdate(id, blog, { new: true })
     response.json(updatedBlog)
   } catch (err) {
     console.log(err)
@@ -66,7 +66,7 @@ app.delete('/api/blogs/:id', async (request, response, next) => {
     if (id === undefined) {
       response.status(400).end()
     }
-    await BlogDBService.findByIdAndDelete(id)
+    await Blog.findByIdAndDelete(id)
     response.status(204).end()
   } catch (err) {
     next(err)

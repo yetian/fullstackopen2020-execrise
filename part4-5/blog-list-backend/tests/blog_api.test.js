@@ -4,6 +4,7 @@ const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
 const Blog = require('../model/BlogDBService')
+const User = require('../model/UserDBService')
 const api = supertest(app)
 
 const blogs = [
@@ -17,11 +18,30 @@ const blogs = [
 
 beforeEach(async () => {
   await Blog.deleteMany({})
+  await User.deleteMany({})
   let blogObject = new Blog(blogs[0])
   await blogObject.save()
   blogObject = new Blog(blogs[1])
   await blogObject.save()
+  await api.post('/api/users').send({
+    'username': 'yt',
+    'name': 'Ye Tian',
+    'password': 'abc123'
+  })
 })
+
+const getAuthToken = async () => {
+  const loginData = {
+    'username': 'yt',
+    'password': 'abc123'
+  }
+  const loginResponse = await api.post('/api/login').send(loginData)
+  expect(loginResponse.status).toBe(200)
+  const login = loginResponse.body
+  expect(login.token).toBeDefined()
+  expect(login.username).toBe('yt')
+  return login.token
+}
 
 test('blogs are returned as json', async () => {
   const response = await api.get('/api/blogs')
@@ -42,7 +62,10 @@ test('add a new blog', async () => {
     url: 'url',
     likes: 10
   }
-  let response = await api.post('/api/blogs').send(newBlog)
+  const token = await getAuthToken()
+  let response = await api.post('/api/blogs')
+    .set('Authorization', `bearer ${token}`)
+    .send(newBlog)
   expect(response.status).toBe(201)
   response = await api.get('/api/blogs')
   expect(response.body).toHaveLength(3)
@@ -54,7 +77,10 @@ test('add a new blog without like', async () => {
     author: 'author',
     url: 'url'
   }
-  let response = await api.post('/api/blogs').send(newBlog)
+  const token = await getAuthToken()
+  let response = await api.post('/api/blogs')
+    .set('Authorization', `bearer ${token}`)
+    .send(newBlog)
   expect(response.status).toBe(201)
   expect(response.body.likes).toBe(0)
 })
@@ -64,7 +90,10 @@ test('add a new blog without title', async () => {
     author: 'author',
     url: 'url'
   }
-  let response = await api.post('/api/blogs').send(newBlog)
+  const token = await getAuthToken()
+  let response = await api.post('/api/blogs')
+    .set('Authorization', `bearer ${token}`)
+    .send(newBlog)
   expect(response.status).toBe(400)
 })
 
@@ -73,31 +102,60 @@ test('add a new blog without url', async () => {
     title: 'title',
     author: 'author'
   }
-  let response = await api.post('/api/blogs').send(newBlog)
+  const token = await getAuthToken()
+  let response = await api.post('/api/blogs')
+    .set('Authorization', `bearer ${token}`)
+    .send(newBlog)
   expect(response.status).toBe(400)
 })
 
 test('update a blog', async () => {
-  const id = '5a422a851b54a676234d17f7'
   const newBlog = {
-    title: 'title1',
-    author: 'author1',
-    url: 'url1'
+    title: 'title',
+    author: 'author',
+    url: 'url',
+    likes: 10
   }
-  let response = await api.put(`/api/blogs/${id}`).send(newBlog)
+  let token = await getAuthToken()
+  let response = await api.post('/api/blogs')
+    .set('Authorization', `bearer ${token}`)
+    .send(newBlog)
+
+  const id = response.body.id
+  let updatedBlog = JSON.parse(JSON.stringify(response.body))
+  updatedBlog.title = 'title1'
+  updatedBlog.url = 'url1'
+  token = await getAuthToken()
+  response = await api.put(`/api/blogs/${id}`)
+    .set('Authorization', `bearer ${token}`)
+    .send(updatedBlog)
   expect(response.status).toBe(200)
   expect(response.body).toBeDefined()
   expect(response.body.id).toBe(id)
-  expect(response.body.title).toBe(newBlog.title)
-  expect(response.body.url).toBe(newBlog.url)
+  expect(response.body.title).toBe(updatedBlog.title)
+  expect(response.body.url).toBe(updatedBlog.url)
 })
 
 test('delete a blog', async () => {
-  const id = '5a422a851b54a676234d17f7'
-  let response = await api.delete(`/api/blogs/${id}`)
+  const newBlog = {
+    title: 'title',
+    author: 'author',
+    url: 'url',
+    likes: 10
+  }
+  let token = await getAuthToken()
+  let response = await api.post('/api/blogs')
+    .set('Authorization', `bearer ${token}`)
+    .send(newBlog)
+  const id = response.body.id
+  response = await api.get('/api/blogs')
+  expect(response.body).toHaveLength(3)
+  token = await getAuthToken()
+  response = await api.delete(`/api/blogs/${id}`)
+    .set('Authorization', `bearer ${token}`)
   expect(response.status).toBe(204)
   response = await api.get('/api/blogs')
-  expect(response.body).toHaveLength(1)
+  expect(response.body).toHaveLength(2)
 })
 
 test('this is a test', () => {

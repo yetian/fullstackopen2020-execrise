@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import Blog from './components/Blog'
+import LoginForm from './components/Login'
+import NewBlogForm from './components/NewBlog'
+import Toggleable from './components/Toggleable'
 import Notification from './components/Notification'
 import blogService from './services/blogs'
 import loginService from './services/login'
@@ -101,54 +104,35 @@ const App = () => {
     }
   }
 
-  const loginForm = () => (
-    <form onSubmit={handleLogin}>
-      <div>
-        username
-          <input
-          type="text"
-          value={username}
-          name="Username"
-          onChange={({ target }) => setUsername(target.value)}
+  const loginForm = () => {
+    return (
+      <Toggleable buttonLabel="log in">
+        <LoginForm 
+          handleSubmit={handleLogin}
+          handleUsernameChange={({ target }) => setUsername(target.value)}
+          handlePasswordChange={({ target }) => setPassword(target.value)}
+          username={username}
+          password={password}
         />
-      </div>
-      <div>
-        password
-          <input
-          type="password"
-          value={password}
-          name="Password"
-          onChange={({ target }) => setPassword(target.value)}
-        />
-      </div>
-      <button type="submit">log in</button>
-    </form>      
-  )
+      </Toggleable>
+    )
+  }
 
-  const blogForm = () => (
-    <form onSubmit={addBlog}>
-      <h2>Add a new blog</h2>
-      title:
-      <input
-        value={newTitle}
-        onChange={handleTitleChange}
-      />
-      <br/>
-      author:
-      <input
-        value={newAuthor}
-        onChange={handleAuthorChange}
-      />
-      <br/>
-      url:
-      <input
-        value={newUrl}
-        onChange={handleUrlChange}
-      />
-      <br/>
-      <button type="submit">create</button>
-    </form>  
-  )
+  const newBlogForm = () => {
+    return (
+      <Toggleable buttonLabel="new blog">
+        <NewBlogForm
+          handleSubmit={addBlog}
+          handleTitleChange={handleTitleChange}
+          handleAuthorChange={handleAuthorChange}
+          handleUrlChange={handleUrlChange}
+          title={newTitle}
+          author={newAuthor}
+          url={newUrl}
+        />
+      </Toggleable>
+    )
+  }
 
   return (
     <div>
@@ -158,12 +142,13 @@ const App = () => {
 
       { 
         user === null ? 
-          loginForm() : 
+          loginForm() 
+          : 
           <div>
             <p>
               {user.name} logged-in <button onClick={handleLogout}> log out</button>
             </p>
-            { blogForm() }
+            { newBlogForm() }
           </div>
       }
 

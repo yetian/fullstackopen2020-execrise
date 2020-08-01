@@ -30,7 +30,7 @@ const blogForm = ({
     />
     <br/>
     <button type="submit">create</button>
-  </form>  
+  </form>
 )
 
 export default blogForm

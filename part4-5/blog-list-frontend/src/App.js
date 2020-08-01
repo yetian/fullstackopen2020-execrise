@@ -15,7 +15,7 @@ const App = () => {
   const [newTitle, setTitle] = useState('')
   const [newAuthor, setAuthor] = useState('')
   const [newUrl, setUrl] = useState('')
-  const [username, setUsername] = useState('') 
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [user, setUser] = useState(null)
 
@@ -62,7 +62,7 @@ const App = () => {
 
       window.localStorage.setItem(
         'loggedUser', JSON.stringify(user)
-      ) 
+      )
       blogService.setToken(user.token)
       setUser(user)
       setUsername('')
@@ -93,7 +93,7 @@ const App = () => {
       blogCopy.push(response)
       setBlogs(blogCopy)
       notificationHelper({
-        message: `Blog added`,
+        message: 'Blog added',
         state: 'success'
       })
     } catch (error) {
@@ -104,10 +104,53 @@ const App = () => {
     }
   }
 
+  const updateLike = async (blog) => {
+    let blogCopy = [...blogs]
+    let existBlog = blogCopy.find(b => b.id === blog.id)
+    if (existBlog) {
+      existBlog.likes ++
+      try {
+        await blogService.update(blog.id, existBlog)
+        blogService.getAll().then(blogs =>
+          setBlogs( blogs )
+        )
+        notificationHelper({
+          message: `The blog ${blog.title} was liked successfully.`,
+          state: 'success'
+        })
+      } catch (err) {
+        notificationHelper({
+          message: `Failed to update the like of the blog ${blog.title}`,
+          state: 'error'
+        })
+      }
+    }
+  }
+
+  const handleDeletion = async (blog) => {
+    if (window.confirm(`Delete ${blog.title}?`)) {
+      try {
+        await blogService.deleteItem(blog.id)
+        blogService.getAll().then(blogs =>
+          setBlogs( blogs )
+        )
+        notificationHelper({
+          message: `The blog ${blog.title} was deleted successfully.`,
+          state: 'success'
+        })
+      } catch (err) {
+        notificationHelper({
+          message: `Failed to delete the blog ${blog.title}`,
+          state: 'error'
+        })
+      }
+    }
+  }
+
   const loginForm = () => {
     return (
       <Toggleable buttonLabel="log in">
-        <LoginForm 
+        <LoginForm
           handleSubmit={handleLogin}
           handleUsernameChange={({ target }) => setUsername(target.value)}
           handlePasswordChange={({ target }) => setPassword(target.value)}
@@ -140,10 +183,10 @@ const App = () => {
 
       <Notification message={notification.message} state={notification.state} />
 
-      { 
-        user === null ? 
-          loginForm() 
-          : 
+      {
+        user === null ?
+          loginForm()
+          :
           <div>
             <p>
               {user.name} logged-in <button onClick={handleLogout}> log out</button>
@@ -153,8 +196,8 @@ const App = () => {
       }
 
       <h2>Blogs</h2>
-      {blogs.map(blog =>
-        <Blog key={blog.id} blog={blog} />
+      {blogs.sort((a, b) => b.likes - a.likes).map(blog =>
+        <Blog key={blog.id} blog={blog} handleLike={() => updateLike(blog)} handleDeletion={() => handleDeletion(blog)}/>
       )}
     </div>
   )
